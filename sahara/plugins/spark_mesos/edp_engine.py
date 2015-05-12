@@ -145,14 +145,16 @@ class EdpEngine(edp_engine.SparkJobEngine):
         if wrapper_jar and wrapper_class:
             # Substrings which may be empty have spaces
             # embedded if they are non-empty
-            cmd = ('job.sh submit {klass} {addnl_jars} '
-                   '{wrapper_jar} {wrapper_args}{args}').format(
-                klass=wrapper_class, jar_path=wrapper_jar,
+            cmd = ('job.sh submit{driver_cp} --class {wrapper_class}'
+                   '{addnl_jars} {wrapper_jar} {wrapper_args}{args}').format(
+                driver_cp=self.get_driver_classpath(),
+                klass=wrapper_class,
                 addnl_jars=additional_jars,
                 wrapper_jar=wrapper_jar, wrapper_args=wrapper_args,
                 args=args)
         else:
-            cmd = 'job.sh submit {klass} {addnl_jars} {app_jar} {args}'.format(
+            cmd = ('job.sh submit --class {klass}{addnl_jars}'
+                   '{app_jar}{args}').format(
                 klass=job_class,
                 addnl_jars=additional_jars,
                 app_jar=app_jar,
@@ -187,7 +189,16 @@ class EdpEngine(edp_engine.SparkJobEngine):
                          {'status': ret, 'stdout': stdout})
 
     def cancel_job(self, job_execution):
-        pass
+        framework_id = self._get_framework_id_if_running(job_execution)
+
+        if framework_id is not None:
+            master = plugin_utils.get_instance(self.cluster, "master")
+            with remote.get_remote(master) as r:
+                ret, stdout = r.execute_command(
+                    'job.sh shutdown {0}'.format(framework_id))
+                if ret == 0:
+                    return self._get_job_status_from_remote(r, framework_id,
+                                                            job_execution)
 
     def get_job_status(self, job_execution):
         framework_id = self._get_framework_id_if_running(job_execution)
@@ -197,3 +208,6 @@ class EdpEngine(edp_engine.SparkJobEngine):
             with remote.get_remote(master) as r:
                 return self._get_job_status_from_remote(r, framework_id,
                                                         job_execution)
+
+    def get_driver_classpath(self):
+        return ''
