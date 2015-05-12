@@ -6,24 +6,31 @@ MASTER_FILE="/etc/cloud/master"
 function usage {
 echo "Usage: `basename $0` (submit CLASS JAR_PATH)|(status FRAMEWORK_ID)"
     exit 1
-} 
+}
+
+function get_master_hostname {
+    echo "`cat ${MASTER_FILE}`"
+}
 
 function get_master {
-    MASTER_HOSTNAME=`cat ${MASTER_FILE}`
+    MASTER_HOSTNAME=`get_master_hostname`
     echo "mesos://${MASTER_HOSTNAME}:5050"
 }
+
 
 [[ $# -ge 1 ]] || usage
 
 case "$1" in
 "submit")
     [[ $# -ge 3 ]] || usage
-    CLASS="$2"
-    JAR_PATH="$3"
     LOCAL_UUID=`uuidgen`
     TMP_FILE=/tmp/job_${LOCAL_UUID}
-    nohup ${SPARK_HOME}/bin/spark-submit --master `get_master` --class ${CLASS} ${JAR_PATH} > ${TMP_FILE} 2>&1 &
-    for i in {1..10}; do
+    shift
+    echo "$@"
+    COMMAND="${SPARK_HOME}/bin/spark-submit --master `get_master` $@"
+    echo $COMMAND
+    nohup $COMMAND > ${TMP_FILE} 2>&1 &
+    for i in {1..30}; do
         if [ ! -f ${TMP_FILE} ]; then
             sleep 1
             continue
@@ -51,7 +58,13 @@ case "$1" in
     EXIT=$?
     echo "${STATE}"
     exit $PYEXIT
-    ;;    
+    ;;
+"shutdown")
+    [[ $# -ge 2 ]] || usage
+    FW_ID="$2"
+    echo "frameworkId=${FW_ID}" | curl -d@- -X POST http://`get_master_hostname`:5050/master/shutdown
+    echo
+    ;;
 *)
     usage
     ;;
