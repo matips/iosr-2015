@@ -57,6 +57,19 @@ def start_slaves(cluster):
                      _start_slave, master, i)
 
 
+def stop_slaves(instances, cluster):
+    master = utils.get_instance(cluster, "master")
+
+    cpo.add_provisioning_step(cluster.id,
+                              'Start the following process(es): slaves',
+                              len(instances))
+
+    with context.ThreadGroup() as tg:
+        for i in instances:
+            tg.spawn('spark-mesos-stop-sl-{0}'.format(i.instance_name),
+                     _stop_slave, master, i)
+
+
 @cpo.event_wrapper(mark_successful_on_exit=True)
 def _start_datanode(instance):
     with remote.get_remote(instance) as r:
@@ -68,3 +81,10 @@ def _start_slave(master, instance):
     with remote.get_remote(instance) as r:
         r.execute_command(
             "node-admin.sh start slave {0}".format(master.internal_ip))
+
+
+@cpo.event_wrapper(mark_successful_on_exit=True)
+def _stop_slave(master, instance):
+    with remote.get_remote(instance) as r:
+        r.execute_command(
+            "node-admin.sh stop slave {0}".format(master.internal_ip))

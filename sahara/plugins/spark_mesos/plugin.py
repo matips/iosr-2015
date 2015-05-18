@@ -13,27 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from sahara import conductor
-from sahara import context
 from sahara.i18n import _
-from sahara.i18n import _LI
 from sahara.plugins import exceptions as ex
 from sahara.plugins import provisioning as p
 from sahara.plugins.spark_mesos import edp_engine
 from sahara.plugins.spark_mesos import node_starter as ns
 from sahara.plugins.spark_mesos import scaling as sc
 from sahara.plugins import utils
-from sahara.topology import topology_helper as th
-from sahara.utils import cluster_progress_ops as cpo
-from sahara.utils import files as f
-from sahara.utils import general as ug
-from sahara.utils import remote
-
 
 conductor = conductor.API
 LOG = logging.getLogger(__name__)
@@ -101,7 +91,22 @@ class SparkProvider(p.ProvisioningPluginBase):
         raise ex.ClusterCannotBeScaled(cluster.name, _("Not Yet Implemented"))
 
     def decommission_nodes(self, cluster, instances):
-        pass
+        slaves = filter(lambda inst: 'slave' in inst.node_group.node_processes,
+                        instances)
+
+        ns.stop_slaves(list(slaves), cluster)
+
+        dns = utils.get_instances(cluster, "datanode")
+        decommission_dns = False
+
+        for i in instances:
+            if 'datanode' in i.node_group.node_processes:
+                dns.remove(i)
+                decommission_dns = True
+
+        nn = utils.get_instance(cluster, "namenode")
+        if decommission_dns:
+            sc.decommission_dn(nn, instances, dns)
 
     def scale_cluster(self, cluster, instances):
         pass
