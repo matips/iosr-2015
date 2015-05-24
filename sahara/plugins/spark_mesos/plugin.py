@@ -134,8 +134,8 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
         ports_map = {
             'namenode': [8020, 50070, 50470],
             'datanode': [50010, 1004, 50075, 1006, 50020],
-            'master': [5050, 80, 443],
-            'slave': [80, 443]
+            'master': [5050],
+            'slave': []
         }
 
         ports = []
