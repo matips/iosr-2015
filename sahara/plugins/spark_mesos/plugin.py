@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-class SparkProvider(p.ProvisioningPluginBase):
+class SparkMesosProvider(p.ProvisioningPluginBase):
     def __init__(self):
         self.processes = {
             "HDFS": ["namenode", "datanode"],
