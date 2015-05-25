@@ -19,6 +19,7 @@ case "${ACTION}" in
     "master")
         ${BASE_CMD}
         MASTER_HOSTNAME=`hostname`
+        mesos config master "$MASTER_HOSTNAME:5050"
         echo "${MASTER_HOSTNAME}" > ${MASTER_FILE}
         ;;
     "slave")
