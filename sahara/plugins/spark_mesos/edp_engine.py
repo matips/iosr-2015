@@ -17,6 +17,7 @@ import json
 
 from sahara import exceptions as ex
 from sahara.service.edp.spark import engine as edp_engine
+from sahara.plugins.spark_mesos import config_helper as c_helper
 from sahara import conductor as c
 from sahara import context
 from sahara import exceptions as e
@@ -153,8 +154,9 @@ class EdpEngine(edp_engine.SparkJobEngine):
                 wrapper_jar=wrapper_jar, wrapper_args=wrapper_args,
                 args=args)
         else:
-            cmd = ('job.sh submit --class {klass}{addnl_jars}'
+            cmd = ('job.sh submit{driver_cp} --class {klass}{addnl_jars}'
                    ' {app_jar}{args}').format(
+                driver_cp=self.get_driver_classpath(),
                 klass=job_class,
                 addnl_jars=additional_jars,
                 app_jar=app_jar,
@@ -210,4 +212,4 @@ class EdpEngine(edp_engine.SparkJobEngine):
                                                         job_execution)
 
     def get_driver_classpath(self):
-        return ''
+        return c_helper.generate_spark_executor_classpath()
