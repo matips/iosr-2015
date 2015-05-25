@@ -10,7 +10,7 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-$(cd $DIR ; git pull)
+bash -c "cd $DIR && git pull > /dev/null"
 
 function usage {
     echo "Usage: `basename $0` start|stop master|slave [MASTER_HOSTNAME]"
