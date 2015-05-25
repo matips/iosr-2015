@@ -154,7 +154,7 @@ class EdpEngine(edp_engine.SparkJobEngine):
                 args=args)
         else:
             cmd = ('job.sh submit --class {klass}{addnl_jars}'
-                   '{app_jar}{args}').format(
+                   ' {app_jar}{args}').format(
                 klass=job_class,
                 addnl_jars=additional_jars,
                 app_jar=app_jar,
