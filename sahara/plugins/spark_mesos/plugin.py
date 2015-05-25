@@ -84,16 +84,17 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
         pass
 
     def configure_cluster(self, cluster):
-        extra = self._extract_configs_to_extra(cluster)
-        all_instances = utils.get_instances(cluster)
-        cpo.add_provisioning_step(
-            cluster.id, _("Push configs to nodes"), len(all_instances))
-
-        with context.ThreadGroup() as tg:
-            for instance in all_instances:
-                tg.spawn('spark-configure-%s' % instance.instance_name,
-                         self._push_configs_to_new_node, cluster,
-                         extra, instance)
+        pass
+        # extra = self._extract_configs_to_extra(cluster)
+        # all_instances = utils.get_instances(cluster)
+        # cpo.add_provisioning_step(
+        #     cluster.id, _("Push configs to nodes"), len(all_instances))
+        #
+        # with context.ThreadGroup() as tg:
+        #     for instance in all_instances:
+        #         tg.spawn('spark-configure-%s' % instance.instance_name,
+        #                  self._push_configs_to_new_node, cluster,
+        #                  extra, instance)
 
     @cpo.event_wrapper(mark_successful_on_exit=True)
     def _push_configs_to_new_node(self, cluster, extra, instance):
@@ -206,9 +207,9 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
         return extra
 
     def start_cluster(self, cluster):
-        ns.start_namenode(cluster)
-        ns.start_datanodes(cluster)
-        ns.prepare_namenode_dirs(cluster)
+        # ns.start_namenode(cluster)
+        # ns.start_datanodes(cluster)
+        # ns.prepare_namenode_dirs(cluster)
         ns.start_master(cluster)
         ns.start_slaves(cluster)
 
