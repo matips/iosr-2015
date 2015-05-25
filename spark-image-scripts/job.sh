@@ -26,9 +26,8 @@ case "$1" in
     LOCAL_UUID=`uuidgen`
     TMP_FILE=/tmp/job_${LOCAL_UUID}
     shift
-    echo "$@"
     COMMAND="${SPARK_HOME}/bin/spark-submit --master `get_master` $@"
-    echo $COMMAND
+#    echo $COMMAND
     nohup $COMMAND > ${TMP_FILE} 2>&1 &
     for i in {1..30}; do
         if [ ! -f ${TMP_FILE} ]; then
@@ -54,6 +53,7 @@ case "$1" in
 "status")
     [[ $# -ge 2 ]] || usage
     FW_ID="$2"
+    mesos config master "`get_master_hostname`:5050"
     STATE=`mesos-state | parse_job_status.py "${FW_ID}"`
     EXIT=$?
     echo "${STATE}"
