@@ -25,7 +25,6 @@ from sahara.plugins import provisioning as p
 from sahara.plugins.spark_mesos import edp_engine
 from sahara.plugins.spark_mesos import node_starter as ns
 from sahara.plugins.spark_mesos import config_helper as c_helper
-from sahara.plugins.spark_mesos import scaling as sc
 from sahara.plugins import utils
 from sahara.topology import topology_helper as th
 from sahara.utils import files as f
@@ -217,22 +216,7 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
         raise ex.ClusterCannotBeScaled(cluster.name, _("Not Yet Implemented"))
 
     def decommission_nodes(self, cluster, instances):
-        slaves = filter(lambda inst: 'slave' in inst.node_group.node_processes,
-                        instances)
-
-        ns.stop_slaves(list(slaves), cluster)
-
-        dns = utils.get_instances(cluster, "datanode")
-        decommission_dns = False
-
-        for i in instances:
-            if 'datanode' in i.node_group.node_processes:
-                dns.remove(i)
-                decommission_dns = True
-
-        nn = utils.get_instance(cluster, "namenode")
-        if decommission_dns:
-            sc.decommission_dn(nn, instances, dns)
+        pass
 
     def scale_cluster(self, cluster, instances):
         pass
