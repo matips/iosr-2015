@@ -17,7 +17,7 @@ import json
 
 from sahara import exceptions as ex
 from sahara.service.edp.spark import engine as edp_engine
-from sahara import conductor
+from sahara import conductor as c
 from sahara import context
 from sahara import exceptions as e
 from sahara.i18n import _
@@ -28,6 +28,7 @@ from sahara.swift import utils as su
 from sahara.utils import edp
 from sahara.utils import remote
 
+conductor = c.API
 
 class EdpEngine(edp_engine.SparkJobEngine):
     edp_base_version = "1.0.0"
@@ -83,8 +84,7 @@ class EdpEngine(edp_engine.SparkJobEngine):
         job = conductor.job_get(ctx, job_execution.job_id)
 
         additional_sources, updated_job_configs = (
-            job_utils.resolve_data_source_references(job_execution.job_configs)
-        )
+            job_utils.resolve_data_source_references(job_execution.job_configs))
 
         for data_source in additional_sources:
             if data_source and data_source.type == 'hdfs':
