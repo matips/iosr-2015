@@ -29,7 +29,9 @@ from sahara.swift import utils as su
 from sahara.utils import edp
 from sahara.utils import remote
 
+
 conductor = c.API
+
 
 class EdpEngine(edp_engine.SparkJobEngine):
     edp_base_version = "1.0.0"
@@ -174,8 +176,12 @@ class EdpEngine(edp_engine.SparkJobEngine):
             launch = os.path.join(wf_dir, "launch_command")
             r.write_file_to(launch, self._job_script())
             r.execute_command("chmod +x %s" % launch)
-            ret, stdout = r.execute_command(
+            ret, _ = r.execute_command(
                 "cd %s; ./launch_command %s" % (wf_dir, cmd))
+
+            if ret == 0:
+                ret, stdout = r.execute_command(
+                    'cd {0}; cat stdout'.format(wf_dir))
 
         if ret == 0:
             # Success, we'll add the wf_dir in job_execution.extra and store
