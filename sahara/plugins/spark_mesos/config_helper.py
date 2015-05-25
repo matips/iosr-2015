@@ -281,12 +281,9 @@ def generate_hadoop_setup_script(storage_paths, env_configs):
 
 def generate_job_cleanup_config(cluster):
     args = {
-        'minimum_cleanup_megabytes': get_config_value(
-            "Spark", "Minimum cleanup megabytes", cluster),
-        'minimum_cleanup_seconds': get_config_value(
-            "Spark", "Minimum cleanup seconds", cluster),
-        'maximum_cleanup_seconds': get_config_value(
-            "Spark", "Maximum cleanup seconds", cluster)
+        'minimum_cleanup_megabytes': 4096,
+        'minimum_cleanup_seconds': 86400,
+        'maximum_cleanup_seconds': 1209600
     }
     job_conf = {'valid': (args['maximum_cleanup_seconds'] > 0 and
                           (args['minimum_cleanup_megabytes'] > 0
