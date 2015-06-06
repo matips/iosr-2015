@@ -9,7 +9,7 @@ from sahara.utils import remote
 def start_namenode(cluster):
     namenode = utils.get_instance(cluster, "namenode")
     with remote.get_remote(namenode) as r:
-        r.execute_command("sudo -u hdfs hadoop namenode -format")
+        r.execute_command("sudo -u hadoop hadoop namenode -format")
         r.execute_command("sudo service hadoop-hdfs-namenode start")
 
 
@@ -18,8 +18,8 @@ def start_namenode(cluster):
 def prepare_namenode_dirs(cluster):
     namenode = utils.get_instance(cluster, "namenode")
     with remote.get_remote(namenode) as r:
-        r.execute_command("sudo -u hdfs hdfs dfs -mkdir -p /user/$USER/")
-        r.execute_command("sudo -u hdfs hdfs dfs -chown $USER /user/$USER/")
+        r.execute_command("sudo -u hadoop hdfs dfs -mkdir -p /user/$USER/")
+        r.execute_command("sudo -u hadoop hdfs dfs -chown $USER /user/$USER/")
 
 
 def start_datanodes(cluster):
