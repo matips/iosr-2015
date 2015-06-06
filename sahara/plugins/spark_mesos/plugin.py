@@ -126,7 +126,7 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
                         {"nn_path": nn_path, "dn_path": dn_path})
 
         with remote.get_remote(instance) as r:
-            r.execute_command('sudo chown -R $USER:$USER /etc/hadoop')
+            r.execute_command('sudo chown -R $USER:$USER /opt/hadoop/etc/hadoop')
             r.write_files_to(files_hadoop)
             r.write_files_to(files_init)
             r.execute_command('sudo chmod 0500 /tmp/sahara-hadoop-init.sh')
@@ -139,9 +139,9 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
 
             if c_helper.is_data_locality_enabled(cluster):
                 r.write_file_to(
-                    '/etc/hadoop/topology.sh',
+                    '/opt/hadoop/etc/hadoop/topology.sh',
                     f.get_file_text('plugins/spark/resources/topology.sh'))
-                r.execute_command('sudo chmod +x /etc/hadoop/topology.sh')
+                r.execute_command('sudo chmod +x /opt/hadoop/etc/hadoop/topology.sh')
 
             self._write_topology_data(r, cluster, extra)
             self._push_master_configs(r, cluster, instance)
@@ -151,7 +151,7 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
     def _write_topology_data(r, cluster, extra):
         if c_helper.is_data_locality_enabled(cluster):
             topology_data = extra['topology_data']
-            r.write_file_to('/etc/hadoop/topology.data', topology_data)
+            r.write_file_to('/opt/hadoop/etc/hadoop/topology.data', topology_data)
 
     def _push_master_configs(self, r, cluster, instance):
         node_processes = instance.node_group.node_processes
@@ -163,18 +163,18 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
         node_processes = instance.node_group.node_processes
         if 'master' in node_processes:
             if extra['job_cleanup']['valid']:
-                r.write_file_to('/etc/hadoop/tmp-cleanup.sh',
+                r.write_file_to('/opt/hadoop/etc/hadoop/tmp-cleanup.sh',
                                 extra['job_cleanup']['script'])
-                r.execute_command("chmod 755 /etc/hadoop/tmp-cleanup.sh")
+                r.execute_command("chmod 755 /opt/hadoop/etc/hadoop/tmp-cleanup.sh")
             else:
-                r.execute_command("sudo rm -f /etc/hadoop/tmp-cleanup.sh")
+                r.execute_command("sudo rm -f /opt/hadoop/etc/hadoop/tmp-cleanup.sh")
 
     @staticmethod
     def _push_namenode_configs(cluster, r):
-        r.write_file_to('/etc/hadoop/dn.incl',
+        r.write_file_to('/opt/hadoop/etc/hadoop/dn.incl',
                         utils.generate_fqdn_host_names(
                             utils.get_instances(cluster, "datanode")))
-        r.write_file_to('/etc/hadoop/dn.excl', '')
+        r.write_file_to('/opt/hadoop/etc/hadoop/dn.excl', '')
 
     @staticmethod
     def _extract_configs_to_extra(cluster):

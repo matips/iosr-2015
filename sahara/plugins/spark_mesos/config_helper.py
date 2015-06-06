@@ -49,7 +49,7 @@ _default_executor_classpath = ":".join(
      '/usr/lib/hadoop/hadoop-swift.jar'])
 
 
-HADOOP_CONF_DIR = "/etc/hadoop/conf"
+HADOOP_CONF_DIR = "/opt/hadoop/etc/hadoop/conf"
 
 ENV_CONFS = {
     "HDFS": {
@@ -183,8 +183,8 @@ def generate_xml_configs(configs, storage_path, nn_hostname, hadoop_port):
                                                      '/dfs/dn'),
         'hadoop.tmp.dir': extract_hadoop_path(storage_path,
                                               '/dfs'),
-        'dfs.hosts': '/etc/hadoop/dn.incl',
-        'dfs.hosts.exclude': '/etc/hadoop/dn.excl'
+        'dfs.hosts': '/opt/hadoop/etc/hadoop/dn.incl',
+        'dfs.hosts.exclude': '/opt/hadoop/etc/hadoop/dn.excl'
     }
 
     # inserting user-defined configs
@@ -260,18 +260,18 @@ def generate_hadoop_setup_script(storage_paths, env_configs):
     for line in env_configs:
         if 'HADOOP' in line:
             script_lines.append('echo "%s" >> /tmp/hadoop-env.sh' % line)
-    script_lines.append("cat /etc/hadoop/hadoop-env.sh >> /tmp/hadoop-env.sh")
-    script_lines.append("cp /tmp/hadoop-env.sh /etc/hadoop/hadoop-env.sh")
+    script_lines.append("cat /opt/hadoop/etc/hadoop/hadoop-env.sh >> /tmp/hadoop-env.sh")
+    script_lines.append("cp /tmp/hadoop-env.sh /opt/hadoop/etc/hadoop/hadoop-env.sh")
 
     hadoop_log = storage_paths[0] + "/log/hadoop/\$USER/"
     script_lines.append('sed -i "s,export HADOOP_LOG_DIR=.*,'
-                        'export HADOOP_LOG_DIR=%s," /etc/hadoop/hadoop-env.sh'
+                        'export HADOOP_LOG_DIR=%s," /opt/hadoop/etc/hadoop/hadoop-env.sh'
                         % hadoop_log)
 
     hadoop_log = storage_paths[0] + "/log/hadoop/hdfs"
     script_lines.append('sed -i "s,export HADOOP_SECURE_DN_LOG_DIR=.*,'
                         'export HADOOP_SECURE_DN_LOG_DIR=%s," '
-                        '/etc/hadoop/hadoop-env.sh' % hadoop_log)
+                        '/opt/hadoop/etc/hadoop/hadoop-env.sh' % hadoop_log)
 
     for path in storage_paths:
         script_lines.append("chown -R hadoop:hadoop %s" % path)
