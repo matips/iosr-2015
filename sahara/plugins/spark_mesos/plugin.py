@@ -121,7 +121,7 @@ class SparkMesosProvider(p.ProvisioningPluginBase):
         nn_path = ' '.join(c_helper.make_hadoop_path(storage_paths, '/dfs/nn'))
 
         hdfs_dir_cmd = ('sudo mkdir -p %(nn_path)s %(dn_path)s &&'
-                        'sudo chown -R hdfs:hadoop %(nn_path)s %(dn_path)s &&'
+                        'sudo chown -R hadoop:hadoop %(nn_path)s %(dn_path)s &&'
                         'sudo chmod 755 %(nn_path)s %(dn_path)s' %
                         {"nn_path": nn_path, "dn_path": dn_path})
 
