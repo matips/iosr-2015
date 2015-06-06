@@ -49,7 +49,7 @@ _default_executor_classpath = ":".join(
      '/usr/lib/hadoop/hadoop-swift.jar'])
 
 
-HADOOP_CONF_DIR = "/opt/hadoop/etc/hadoop/conf"
+HADOOP_CONF_DIR = "/opt/hadoop/etc/hadoop"
 
 ENV_CONFS = {
     "HDFS": {
