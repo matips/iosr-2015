@@ -9,8 +9,8 @@ from sahara.utils import remote
 def start_namenode(cluster):
     namenode = utils.get_instance(cluster, "namenode")
     with remote.get_remote(namenode) as r:
-        r.execute_command("hadoop namenode -format")
-        r.execute_command("start-dfs.sh")
+        r.execute_command("/opt/hadoop/bin/hadoop namenode -format")
+        r.execute_command("/opt/hadoop/sbin/start-dfs.sh")
 
 
 @cpo.event_wrapper(mark_successful_on_exit=True,
@@ -18,8 +18,8 @@ def start_namenode(cluster):
 def prepare_namenode_dirs(cluster):
     namenode = utils.get_instance(cluster, "namenode")
     with remote.get_remote(namenode) as r:
-        r.execute_command("hdfs dfs -mkdir -p /user/$USER/")
-        r.execute_command("hdfs dfs -chown $USER /user/$USER/")
+        r.execute_command("/opt/hadoop/bin/hdfs dfs -mkdir -p /user/$USER/")
+        r.execute_command("/opt/hadoop/bin/hdfs dfs -chown $USER /user/$USER/")
 
 
 def start_datanodes(cluster):
@@ -60,7 +60,7 @@ def start_slaves(cluster):
 @cpo.event_wrapper(mark_successful_on_exit=True)
 def _start_datanode(instance):
     with remote.get_remote(instance) as r:
-        r.execute_command("start-dfs.sht")
+        r.execute_command("/opt/hadoop/sbin/start-dfs.sh")
 
 
 @cpo.event_wrapper(mark_successful_on_exit=True)
