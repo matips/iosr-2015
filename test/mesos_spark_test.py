@@ -25,10 +25,10 @@ hadoop_version = "1.0.0"
 auth_url = "http://{0}:5000/v2.0".format(openstack_hostname)
 sahara_url = "http://{0}:8386/v1.1/{1}".format(openstack_hostname, openstack_tenant)
 
-job_binary_name = "simple-test-3.jar"
+job_binary_name = "simple-test-8.jar"
 job_binary_path = "simple-test.jar"
 
-common_test_name = "mesos-test-3"
+common_test_name = "mesos-test-8"
 
 def test_pi():
     # Create global session for nova and other non-sahara services
@@ -50,7 +50,7 @@ def test_pi():
     nova = novaclient(3, session=globalsess)
 
     flavors = map(lambda fl: (fl._info.get(u'disk'), fl),
-                  filter(lambda fl: fl._info.get(u'ram') >= 1024,
+                  filter(lambda fl: fl._info.get(u'ram') >= 1024 and fl._info.get(u'vcpus') >= 2,
                          nova.flavors.list()))
     flavors.sort()
     _, flavor = flavors[0]
@@ -95,12 +95,12 @@ def test_pi():
                                             u'count': 1,
                                             u'floating_ip_pool': u'574c79a7-2af2-4686-95eb-817054d0105e'
                                         },
-                                        {
-                                            u'name': "slave",
-                                            u'node_group_template_id': slave_group.id,
-                                            u'count': 1,
-                                            u'floating_ip_pool': u'574c79a7-2af2-4686-95eb-817054d0105e'
-                                        }
+                                        # {
+                                        #     u'name': "slave",
+                                        #     u'node_group_template_id': slave_group.id,
+                                        #     u'count': 1,
+                                        #     u'floating_ip_pool': u'574c79a7-2af2-4686-95eb-817054d0105e'
+                                        # }
                                     ])
 
 
@@ -136,18 +136,11 @@ def test_pi():
                                                 u'configs': {
                                                     u'edp.java.main_class': u'JavaSparkPi'
                                                 },
-                                                u'args': []
+                                                u'args': ["2"]
                                             })
 
     # @todo: wait for job execution and check job results
-
-    mustend = time.time() + 5 * 60
-    while time.time() < mustend:
-        print job_exec
-        print(job_exec._info.get(u'info').get(u'status'))
-        time.sleep(0.25)
-
-    get_job_status = lambda: job_exec._info.get(u'info').get(u'status').upper()
+    get_job_status = lambda: sahara.job_executions.find(id=job_exec.id)[0]._info.get(u'info').get(u'status').upper()
     job_completed = lambda: get_job_status() not in [u'PENDING', u'RUNNING']
     wait_until(job_completed, 60 * 5)
 
@@ -164,10 +157,9 @@ def test_pi():
 
     try:
         sahara.job_executions.delete(job_exec.id)
-        #cleanup(sahara, nova)
+        cleanup(sahara, nova)
     except Exception:
         pass
-    assert 0
 
 
 def wait_until(predicate, timeout, period=0.25, *args, **kwargs):
