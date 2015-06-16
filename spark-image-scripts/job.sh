@@ -22,6 +22,7 @@ function get_master {
 
 case "$1" in
 "submit")
+    ln -sf /usr/local/lib/libmesos.so /usr/lib/libmesos.so
     [[ $# -ge 3 ]] || usage
     LOCAL_UUID=`uuidgen`
     TMP_FILE=/tmp/job_${LOCAL_UUID}

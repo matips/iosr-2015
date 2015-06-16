@@ -1,3 +1,5 @@
+from saharaclient.api.job_executions import JobExecution
+
 __author__ = 'Rafal Slota'
 
 import os
@@ -23,9 +25,10 @@ hadoop_version = "1.0.0"
 auth_url = "http://{0}:5000/v2.0".format(openstack_hostname)
 sahara_url = "http://{0}:8386/v1.1/{1}".format(openstack_hostname, openstack_tenant)
 
-job_binary_name = "simple-test.jar"
+job_binary_name = "simple-test-3.jar"
+job_binary_path = "simple-test.jar"
 
-common_test_name = "mesos-test"
+common_test_name = "mesos-test-3"
 
 def test_pi():
     # Create global session for nova and other non-sahara services
@@ -110,7 +113,7 @@ def test_pi():
 
 
     # Load job binary from file
-    data = load_file(job_binary_name)
+    data = load_file(job_binary_path)
 
 
     # Upload and register job binary
@@ -124,7 +127,7 @@ def test_pi():
     # Wait for cluster init
     cluster_started = lambda: sahara.clusters.find(name=common_test_name)[0]._info.get(u'status') in [u'Active', u'Error']
     print cluster_started()
-    assert wait_until(cluster_started, 120)
+    assert wait_until(cluster_started, 60 * 10)
     assert sahara.clusters.find(name=common_test_name)[0]._info.get(u'status') == u'Active'
 
 
@@ -137,11 +140,31 @@ def test_pi():
                                             })
 
     # @todo: wait for job execution and check job results
-    print job_exec._info.get(u'status')
 
+    mustend = time.time() + 5 * 60
+    while time.time() < mustend:
+        print job_exec
+        print(job_exec._info.get(u'info').get(u'status'))
+        time.sleep(0.25)
+
+    get_job_status = lambda: job_exec._info.get(u'info').get(u'status').upper()
+    job_completed = lambda: get_job_status() not in [u'PENDING', u'RUNNING']
+    wait_until(job_completed, 60 * 5)
+
+    assert get_job_status() == u'SUCCEEDED'
+
+
+# JOB_STATUS_DONEWITHERROR = 'DONEWITHERROR'
+# JOB_STATUS_FAILED = 'FAILED'
+# JOB_STATUS_KILLED = 'KILLED'
+# JOB_STATUS_PENDING = 'PENDING'
+# JOB_STATUS_RUNNING = 'RUNNING'
+# JOB_STATUS_SUCCEEDED = 'SUCCEEDED'
+# JOB_STATUS_TOBEKILLED = 'TOBEKILLED'
 
     try:
-        cleanup(sahara, nova)
+        sahara.job_executions.delete(job_exec.id)
+        #cleanup(sahara, nova)
     except Exception:
         pass
     assert 0
@@ -174,6 +197,9 @@ def cleanup(sahara, nova):
         sahara.node_group_templates.delete(t.id)
 
     # Cleanup jobs
+    for j in sahara.job_executions.find(name=common_test_name):
+        sahara.jobs.delete(j.id)
+
     for j in sahara.jobs.find(name=common_test_name):
         sahara.jobs.delete(j.id)
 
@@ -195,6 +221,10 @@ def cleanup(sahara, nova):
 def load_file(file_path):
     data = ""
     with open(file_path, "rb") as f:
-        data += f.read(1024)
+        while True:
+            old_len = len(data)
+            data += f.read(1024)
+            if len(data) == old_len:
+                break
 
     return data
