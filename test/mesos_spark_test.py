@@ -25,6 +25,8 @@ sahara_url = "http://{0}:8386/v1.1/{1}".format(openstack_hostname, openstack_ten
 
 job_binary_name = "simple-test.jar"
 
+common_test_name = "mesos-test"
+
 def test_pi():
     # Create global session for nova and other non-sahara services
     globalauth = v2.Token(auth_url=auth_url,
@@ -70,7 +72,7 @@ def test_pi():
 
     # Upload keypair
     pub_key_data = load_file("cloud.key.pub")
-    pub_key = nova.keypairs.create("mesos-test", pub_key_data)
+    pub_key = nova.keypairs.create(common_test_name, pub_key_data)
 
 
     master_group = sahara.node_group_templates.create("mesos-master-test", plugin_name, hadoop_version, flavor._info.get(u'id'),
@@ -82,7 +84,7 @@ def test_pi():
                                       node_processes=["datanode", "slave"])
 
 
-    cluster_template = sahara.cluster_templates.create("mesos-test", plugin_name, hadoop_version,
+    cluster_template = sahara.cluster_templates.create(common_test_name, plugin_name, hadoop_version,
                                     node_groups=[
                                         {
                                             u'name': "master",
@@ -100,7 +102,7 @@ def test_pi():
 
 
 
-    cluster = sahara.clusters.create("mesos-test", plugin_name, hadoop_version,
+    cluster = sahara.clusters.create(common_test_name, plugin_name, hadoop_version,
                                      cluster_template_id=cluster_template.id,
                                      default_image_id=image.id,
                                      net_id=u'1f741b49-4e3e-43fa-900a-564c85d0c9c6',
@@ -115,15 +117,15 @@ def test_pi():
     internal_data = sahara.job_binary_internals.create(job_binary_name, data)
     job_binary = sahara.job_binaries.create(job_binary_name, "internal-db://{0}".format(internal_data.id), "", {})
 
-    job = sahara.jobs.create("mesos-test", "Spark", [job_binary.id], [], "")
+    job = sahara.jobs.create(common_test_name, "Spark", [job_binary.id], [], "")
 
-    print sahara.clusters.find(name="mesos-test")[0]._info
+    print sahara.clusters.find(name=common_test_name)[0]._info
 
     # Wait for cluster init
-    cluster_started = lambda: sahara.clusters.find(name="mesos-test")[0]._info.get(u'status') in [u'Active', u'Error']
+    cluster_started = lambda: sahara.clusters.find(name=common_test_name)[0]._info.get(u'status') in [u'Active', u'Error']
     print cluster_started()
     assert wait_until(cluster_started, 120)
-    assert sahara.clusters.find(name="mesos-test")[0]._info.get(u'status') == u'Active'
+    assert sahara.clusters.find(name=common_test_name)[0]._info.get(u'status') == u'Active'
 
 
     job_exec = sahara.job_executions.create(job.id, cluster.id, None, None,
@@ -156,14 +158,14 @@ def wait_until(predicate, timeout, period=0.25, *args, **kwargs):
 
 def cleanup(sahara, nova):
     # Cleanup clusters
-    for c in sahara.clusters.find(name="mesos-test"):
+    for c in sahara.clusters.find(name=common_test_name):
         sahara.clusters.delete(c.id)
 
-    wait_until(lambda: len(sahara.clusters.find(name="mesos-test")) == 0, 60)
+    wait_until(lambda: len(sahara.clusters.find(name=common_test_name)) == 0, 60)
 
 
     # Cleanup templates
-    for t in sahara.cluster_templates.find(name="mesos-test"):
+    for t in sahara.cluster_templates.find(name=common_test_name):
         sahara.cluster_templates.delete(t.id)
 
     # Cleanup templates
@@ -172,7 +174,7 @@ def cleanup(sahara, nova):
         sahara.node_group_templates.delete(t.id)
 
     # Cleanup jobs
-    for j in sahara.jobs.find(name="mesos-test"):
+    for j in sahara.jobs.find(name=common_test_name):
         sahara.jobs.delete(j.id)
 
     # Cleanup jo binaries
@@ -183,7 +185,7 @@ def cleanup(sahara, nova):
         sahara.job_binary_internals.delete(j.id)
 
     try:
-        k = nova.keypairs.find(name="mesos-test")
+        k = nova.keypairs.find(name=common_test_name)
         nova.keypairs.delete(k.id)
     except Exception:
         pass
