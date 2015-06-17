@@ -9,39 +9,32 @@ from novaclient.client import Client as novaclient
 from keystoneclient import session
 from keystoneclient.auth.identity import v2
 
-openstack_hostname = "172.17.84.1"
-openstack_project = "student"
-
+openstack_auth_url = os.environ['OS_AUTH_URL']
 openstack_token = os.environ['AUTH_TOKEN']
 openstack_tenant = os.environ['TENANT_ID']
 
 openstack_network_id = u'1f741b49-4e3e-43fa-900a-564c85d0c9c6'
+openstack_floating_ip_pool = u'574c79a7-2af2-4686-95eb-817054d0105e'
 
 plugin_name = u'spark_mesos'
-hadoop_version = "1.0.0"
+hadoop_version = '1.0.0'
 
-auth_url = "http://{0}:5000/v2.0".format(openstack_hostname)
-sahara_url = "http://{0}:8386/v1.1/{1}".format(openstack_hostname,
-                                               openstack_tenant)
+job_binary_name = 'simple-test-8.jar'
+job_binary_path = 'simple-test.jar'
 
-job_binary_name = "simple-test-8.jar"
-job_binary_path = "simple-test.jar"
-
-common_test_name = "mesos-test-8"
+common_test_name = 'mesos-test-8'
 
 
 def test_pi():
-    # Create global session for nova and other non-sahara services
-    globalauth = v2.Token(auth_url=auth_url,
+    # Create global session
+    globalauth = v2.Token(auth_url=openstack_auth_url,
                           token=openstack_token,
                           tenant_id=openstack_tenant)
+
     globalsess = session.Session(auth=globalauth)
 
     # Create sahara API and its sessions
-    sahara = saharaclient(auth_url=auth_url,
-                          sahara_url=sahara_url,
-                          input_auth_token=openstack_token,
-                          project_id=openstack_project)
+    sahara = saharaclient(session=globalsess)
 
     # Find suitable flavor
     nova = novaclient(2, session=globalsess)
@@ -68,24 +61,24 @@ def test_pi():
     cleanup(sahara, nova)
 
     # Upload keypair
-    pub_key_data = load_file("cloud.key.pub")
+    pub_key_data = load_file('cloud.key.pub')
     pub_key = nova.keypairs.create(common_test_name, pub_key_data)
 
-    master_group = sahara.node_group_templates.create("mesos-master-test",
+    master_group = sahara.node_group_templates.create('mesos-master-test',
                                                       plugin_name,
                                                       hadoop_version,
                                                       flavor.id,
                                                       auto_security_group=True,
                                                       node_processes=[
-                                                          "namenode",
-                                                          "datanode", "master",
-                                                          "slave"])
+                                                          'namenode',
+                                                          'datanode', 'master',
+                                                          'slave'])
 
     node_groups = [{
-        u'name': "master",
-        u'node_group_template_id': master_group.id,
-        u'count': 1,
-        u'floating_ip_pool': u'574c79a7-2af2-4686-95eb-817054d0105e'
+        'name': 'master',
+        'node_group_template_id': master_group.id,
+        'count': 1,
+        'floating_ip_pool': openstack_floating_ip_pool
     }]
 
     cluster_template = sahara.cluster_templates.create(common_test_name,
@@ -106,10 +99,10 @@ def test_pi():
     # Upload and register job binary
     internal_data = sahara.job_binary_internals.create(job_binary_name, data)
     job_binary = sahara.job_binaries.create(job_binary_name,
-                                            "internal-db://{0}".format(
-                                                internal_data.id), "", {})
+                                            'internal-db://{0}'.format(
+                                                internal_data.id), '', {})
 
-    job = sahara.jobs.create(common_test_name, "Spark", [job_binary.id], [], "")
+    job = sahara.jobs.create(common_test_name, 'Spark', [job_binary.id], [], '')
 
     # Wait for cluster init
     cluster_started = lambda: \
@@ -122,7 +115,7 @@ def test_pi():
         u'configs': {
             u'edp.java.main_class': u'org.apache.spark.examples.JavaSparkPi'
         },
-        u'args': ["2"]
+        u'args': ['2']
     }
 
     job_exec = sahara.job_executions.create(job.id, cluster.id, None, None,
@@ -179,8 +172,8 @@ def cleanup(sahara, nova):
         sahara.cluster_templates.delete(t.id)
 
     # Cleanup templates
-    for t in sahara.node_group_templates.find(name="mesos-master-test") + \
-            sahara.node_group_templates.find(name="mesos-slave-test"):
+    for t in sahara.node_group_templates.find(name='mesos-master-test') + \
+            sahara.node_group_templates.find(name='mesos-slave-test'):
         sahara.node_group_templates.delete(t.id)
 
     # Cleanup jobs
@@ -205,8 +198,8 @@ def cleanup(sahara, nova):
 
 
 def load_file(file_path):
-    data = ""
-    with open(file_path, "rb") as f:
+    data = ''
+    with open(file_path, 'rb') as f:
         while True:
             old_len = len(data)
             data += f.read(1024)
@@ -216,5 +209,5 @@ def load_file(file_path):
     return data
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     test_pi()
